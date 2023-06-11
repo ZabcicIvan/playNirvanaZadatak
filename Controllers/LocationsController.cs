@@ -1,28 +1,20 @@
-﻿using GoogleMaps.LocationServices;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Net.Http;
-using System.Threading.Tasks;
 
 namespace playNirvanaZadatak.Controllers
 {
     [ApiController]
-    [Route("api/locations")]
+    [Route("api/locations/LocationsController")]
     public class LocationsController : ControllerBase
     {
         private readonly string apiKey = "AIzaSyBNqYQufmjPmLzLsaZ6sF1tWEoVidITUfg";
 
-        [HttpPost]
+        [HttpGet]
         public async Task<IActionResult> GetLocationsInRadius([FromBody] LocationRequest request)
         {
-            var db = new ZadatakDatabase();
             try
             {
-                string lat = $"{ request.Latitude }";
+                string lat = $"{request.Latitude}";
                 string lng = $"{request.Longitude}";
 
                 var location = lat.Replace(',','.') + "," + lng.Replace(',', '.');
@@ -37,11 +29,20 @@ namespace playNirvanaZadatak.Controllers
                     Adresa = p["vicinity"].ToString()
                 }).ToList();
 
-                //locations.ForEach(p =>
-                //{
-                //    db.Responses.Add(p);
-                //    db.SaveChanges();
-                //});
+                var requests = new LocationRequest
+                {
+                    Latitude = request.Latitude,
+                    Longitude = request.Longitude,
+                    Radius = request.Radius,
+                    Type = request.Type
+                };
+
+                using (var db = new ZadatakDatabase())
+                {
+                    db.Requests.Add(requests);
+                    db.Responses.AddRange(locations);
+                    db.SaveChanges();
+                }
 
                 return Ok(locations);
             }
@@ -62,6 +63,7 @@ namespace playNirvanaZadatak.Controllers
                 {
                     var content = await response.Content.ReadAsStringAsync();
                     var result = JsonConvert.DeserializeObject<GooglePlacesResponse>(content);
+
                     return result.Results;
                 }
 
@@ -72,8 +74,7 @@ namespace playNirvanaZadatak.Controllers
 
     public class LocationRequest
     {
-        [Key]
-        public int Id { get; set; }
+        public int LocationRequestId { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
         public int Radius { get; set; }
@@ -82,8 +83,7 @@ namespace playNirvanaZadatak.Controllers
 
     public class Location
     {
-        [Key]
-        public int Id { get; set; }
+        public int LocationId { get; set; }
         public string Naziv { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }

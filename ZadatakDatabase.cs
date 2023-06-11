@@ -1,20 +1,23 @@
-﻿using Microsoft.EntityFrameworkCore;
-using playNirvanaZadatak.Controllers;
+﻿using playNirvanaZadatak.Controllers;
+using System.Data.Entity;
+using System.Data.Entity.ModelConfiguration.Conventions;
 
 namespace playNirvanaZadatak
 {
     public class ZadatakDatabase : DbContext
     {
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        public ZadatakDatabase() : base()
         {
-            optionsBuilder.UseSqlServer(@"Server=.\sqlexpress;Database=zadatak;User Id=myuser;Password=myuser;TrustServerCertificate=True",
-            builder => builder.EnableRetryOnFailure());
         }
 
         public DbSet<LocationRequest> Requests { get; set; }
 
         public DbSet<Location> Responses { get; set; }
 
+        protected override void OnModelCreating(DbModelBuilder modelBuilder)
+        {
+            modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
+        }
 
     }
 }
